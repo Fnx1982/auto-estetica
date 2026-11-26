@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Empresa</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <div class="app">
+    <main class="conteudo">
+      <div class="cabecalho">
+        <h1>Cadastro da empresa</h1>
+        <p>Aparece no menu, no orçamento e na mensagem do WhatsApp</p>
+      </div>
+
+      <section class="card">
+        <h2>Identidade visual</h2>
+        <div class="acoes" style="gap:16px">
+          <div id="logo-preview"></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="acoes">
+              <label class="botao sec peq" style="flex-direction:row;cursor:pointer">Enviar logo
+                <input type="file" id="arquivo-logo" accept="image/png,image/jpeg,image/webp" style="display:none"></label>
+              <button class="botao sec peq" type="button" id="remover-logo">Remover logo</button>
+            </div>
+            <span class="dica">PNG, JPG ou WEBP até 2 MB. Sem logo, o sistema usa as iniciais.</span>
+          </div>
+        </div>
+        <div id="msg-logo" class="msg" style="margin-top:12px"></div>
+      </section>
+
+      <form class="card" id="form-empresa">
+        <h2>Dados da empresa</h2>
+        <div class="grade">
+          <label>Nome fantasia<input name="nome_fantasia" required maxlength="80"></label>
+          <label>Razão social<input name="razao_social" maxlength="120"></label>
+          <label>CNPJ / CPF<input name="documento" maxlength="20" inputmode="numeric"></label>
+          <label>Inscrição municipal<input name="inscricao_municipal" maxlength="30"></label>
+          <label>WhatsApp da empresa<input name="whatsapp" maxlength="20" inputmode="tel" placeholder="(41) 90000-0000"></label>
+          <label>Instagram<input name="instagram" maxlength="60" placeholder="@suaempresa"></label>
+          <label class="inteiro">Endereço<input name="endereco" maxlength="200" placeholder="Rua, número, bairro, cidade/UF"></label>
+          <label>Horário de funcionamento<input name="horario" maxlength="120" placeholder="Seg–Sex 8h–18h · Sáb 8h–12h"></label>
+          <label>Chave PIX<input name="chave_pix" maxlength="120"></label>
+          <label class="inteiro">Texto do rodapé do orçamento<textarea name="rodape_orcamento" rows="2" maxlength="300" placeholder="Valores sujeitos a avaliação presencial. Validade de 7 dias."></textarea></label>
+          <label>Cor principal
+            <span class="acoes"><input type="color" name="cor_principal" style="width:64px;height:44px;padding:4px"><span class="dica">Usada nos botões e no menu</span></span>
+          </label>
+        </div>
+        <div id="msg-empresa" class="msg" style="margin-top:14px"></div>
+        <div class="acoes" style="margin-top:16px"><button class="botao" type="submit">Salvar</button></div>
+      </form>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const form = document.getElementById('form-empresa');
+    const msgEmpresa = document.getElementById('msg-empresa');
+    const msgLogo = document.getElementById('msg-logo');
+
+    function preencher(empresa) {
+      for (const campo of form.elements) {
+        if (campo.name && campo.name in empresa) campo.value = empresa[campo.name] ?? '';
+      }
+      const box = document.getElementById('logo-preview');
+      box.replaceChildren(logoEl(empresa));
+      box.firstChild.style.cssText = 'width:96px;height:96px;font-size:28px';
+      document.getElementById('remover-logo').style.display = empresa.logo_key ? '' : 'none';
+      aplicarCor(empresa.cor_principal);
+    }
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const btn = form.querySelector('button[type=submit]');
+      limparMsg(msgEmpresa); btn.disabled = true;
+      try {
+        const empresa = await API.req('/api/empresa', { metodo: 'PUT', corpo: Object.fromEntries(new FormData(form)) });
+        preencher(empresa);
+        document.getElementById('marca-nome').textContent = empresa.nome_fantasia;
+        mostrarMsg(msgEmpresa, 'Dados salvos.', 'ok');
+      } catch (e) { mostrarMsg(msgEmpresa, e.message); }
+      btn.disabled = false;
+    });
+
+    document.getElementById('arquivo-logo').addEventListener('change', async (ev) => {
+      const arquivo = ev.target.files[0];
+      ev.target.value = '';
+      if (!arquivo) return;
+      limparMsg(msgLogo);
+      if (arquivo.size > 2 * 1024 * 1024) { mostrarMsg(msgLogo, 'Logo maior que 2 MB.'); return; }
+      try {
+        preencher(await API.req('/api/empresa/logo', { metodo: 'POST', arquivo }));
+        mostrarMsg(msgLogo, 'Logo atualizada. Recarregue para ver no menu.', 'ok');
+      } catch (e) { mostrarMsg(msgLogo, e.message); }
+    });
+
+    document.getElementById('remover-logo').addEventListener('click', async () => {
+      if (!confirm('Remover a logo?')) return;
+      try { preencher(await API.req('/api/empresa/logo', { metodo: 'DELETE' })); }
+      catch (e) { mostrarMsg(msgLogo, e.message); }
+    });
+
+    (async () => {
+      try {
+        const { empresa } = await montarLayout('empresa', { somenteAdmin: true });
+        preencher(empresa);
+      } catch (e) { mostrarMsg(msgEmpresa, e.message); }
+    })();
+  </script>
+</body>
+</html>

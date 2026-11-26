@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Colaboradores</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <div class="app">
+    <main class="conteudo">
+      <div class="cabecalho">
+        <h1>Colaboradores e acessos</h1>
+        <p>Só o administrador cria contas. Colaborador não vê financeiro nem configurações.</p>
+      </div>
+
+      <section class="card">
+        <h2>Equipe</h2>
+        <div id="msg-lista" class="msg" style="margin-bottom:12px"></div>
+        <div class="tabela">
+          <table style="min-width:560px">
+            <thead><tr><th>Nome</th><th>Usuário</th><th>Acesso</th><th>Situação</th><th></th></tr></thead>
+            <tbody id="linhas"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <form class="card" id="form-usuario">
+        <h2 id="titulo-form">Novo colaborador</h2>
+        <div class="grade">
+          <label>Nome<input name="nome" required maxlength="80"></label>
+          <label>Usuário<input name="usuario" required autocapitalize="none" autocomplete="off">
+            <span class="dica">3 a 30 caracteres, sem espaço</span></label>
+          <label>Senha<input name="senha" type="password" autocomplete="new-password" minlength="8">
+            <span class="dica" id="dica-senha">Mínimo de 8 caracteres</span></label>
+          <label>Acesso
+            <select name="papel"><option value="colaborador">Colaborador</option><option value="admin">Administrador</option></select></label>
+        </div>
+        <div id="msg-form" class="msg" style="margin-top:14px"></div>
+        <div class="acoes" style="margin-top:16px">
+          <button class="botao" type="submit">Salvar</button>
+          <button class="botao sec" type="button" id="cancelar" style="display:none">Cancelar edição</button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const form = document.getElementById('form-usuario');
+    const msgForm = document.getElementById('msg-form');
+    const msgLista = document.getElementById('msg-lista');
+    let eu = null;
+    let editandoId = null;
+
+    function desenhar(lista) {
+      const linhas = lista.map(u => {
+        const proprio = u.id === eu.id;
+        return el('tr', {},
+          el('td', {}, el('b', {}, u.nome), proprio ? ' (você)' : ''),
+          el('td', {}, u.usuario),
+          el('td', {}, el('span', { class: 'tag ' + (u.papel === 'admin' ? 'admin' : 'colab') }, u.papel === 'admin' ? 'Administrador' : 'Colaborador')),
+          el('td', {}, el('span', { class: 'tag ' + (u.ativo ? 'colab' : 'inativo') }, u.ativo ? 'Ativo' : 'Desativado')),
+          el('td', { style: 'text-align:right' },
+            el('div', { class: 'acoes', style: 'justify-content:flex-end' },
+              el('button', { class: 'botao sec peq', type: 'button', onclick: () => editar(u) }, 'Editar'),
+              proprio ? null : el('button', { class: 'botao sec peq', type: 'button', onclick: () => alternarAtivo(u) }, u.ativo ? 'Desativar' : 'Reativar')))
+        );
+      });
+      document.getElementById('linhas').replaceChildren(...linhas);
+    }
+
+    async function carregar() {
+      try { desenhar(await API.req('/api/usuarios')); }
+      catch (e) { mostrarMsg(msgLista, e.message); }
+    }
+
+    function editar(u) {
+      editandoId = u.id;
+      form.nome.value = u.nome;
+      form.usuario.value = u.usuario;
+      form.usuario.disabled = true;
+      form.senha.value = '';
+      form.senha.required = false;
+      form.papel.value = u.papel;
+      document.getElementById('titulo-form').textContent = 'Editar: ' + u.nome;
+      document.getElementById('dica-senha').textContent = 'Deixe em branco para manter a senha atual';
+      document.getElementById('cancelar').style.display = '';
+      limparMsg(msgForm);
+      form.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function novo() {
+      editandoId = null;
+      form.reset();
+      form.usuario.disabled = false;
+      form.senha.required = true;
+      document.getElementById('titulo-form').textContent = 'Novo colaborador';
+      document.getElementById('dica-senha').textContent = 'Mínimo de 8 caracteres';
+      document.getElementById('cancelar').style.display = 'none';
+    }
+
+    async function alternarAtivo(u) {
+      if (u.ativo && !confirm(`Desativar ${u.nome}? Ele(a) perde o acesso na hora.`)) return;
+      limparMsg(msgLista);
+      try { desenhar(await API.req('/api/usuarios/' + u.id, { metodo: 'PUT', corpo: { ativo: !u.ativo } })); }
+      catch (e) { mostrarMsg(msgLista, e.message); }
+    }
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const btn = form.querySelector('button[type=submit]');
+      limparMsg(msgForm); btn.disabled = true;
+      const d = { nome: form.nome.value, papel: form.papel.value };
+      if (form.senha.value) d.senha = form.senha.value;
+      try {
+        if (editandoId) {
+          desenhar(await API.req('/api/usuarios/' + editandoId, { metodo: 'PUT', corpo: d }));
+          mostrarMsg(msgForm, 'Alterações salvas.', 'ok');
+        } else {
+          d.usuario = form.usuario.value;
+          desenhar(await API.req('/api/usuarios', { metodo: 'POST', corpo: d }));
+          mostrarMsg(msgForm, 'Colaborador criado. Passe o usuário e a senha para ele(a).', 'ok');
+        }
+        novo();
+      } catch (e) { mostrarMsg(msgForm, e.message); }
+      btn.disabled = false;
+    });
+
+    document.getElementById('cancelar').addEventListener('click', () => { novo(); limparMsg(msgForm); });
+
+    (async () => {
+      try {
+        ({ usuario: eu } = await montarLayout('usuarios', { somenteAdmin: true }));
+        novo();
+        carregar();
+      } catch (e) { mostrarMsg(msgLista, e.message); }
+    })();
+  </script>
+</body>
+</html>

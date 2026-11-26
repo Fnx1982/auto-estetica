@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <div class="app">
+    <main class="conteudo">
+      <div class="cabecalho">
+        <h1 id="ola">Painel</h1>
+        <p id="hoje"></p>
+      </div>
+      <div id="msg" class="msg"></div>
+
+      <section class="card" id="pendencias" style="display:none">
+        <h2>Complete o cadastro da empresa</h2>
+        <p class="dica" style="font-size:14px;margin:0 0 12px">Esses dados aparecem no orçamento e na mensagem do WhatsApp.</p>
+        <ul id="lista-pendencias" style="margin:0 0 14px;padding-left:20px;font-size:14px;line-height:1.7"></ul>
+        <a class="botao" href="empresa.html" style="text-decoration:none;display:inline-block">Ir para Empresa</a>
+      </section>
+
+      <section class="card">
+        <h2>Próximas etapas do sistema</h2>
+        <p class="dica" style="font-size:14px;margin:0">Entrada de veículo com mapa de avarias, clientes, orçamentos pelo WhatsApp, serviços e promoções, estoque e financeiro aparecem no menu conforme forem liberados.</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    (async () => {
+      try {
+        const { usuario, empresa } = await montarLayout('painel');
+        document.getElementById('ola').textContent = 'Olá, ' + usuario.nome.split(' ')[0];
+        document.getElementById('hoje').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+        if (usuario.papel === 'admin') {
+          const faltando = [
+            ['logo_key', 'Logo'], ['whatsapp', 'WhatsApp da empresa'], ['endereco', 'Endereço'],
+            ['documento', 'CNPJ / CPF'], ['chave_pix', 'Chave PIX']
+          ].filter(([c]) => !empresa[c]).map(([, n]) => n);
+          if (faltando.length) {
+            document.getElementById('lista-pendencias').append(...faltando.map(n => el('li', {}, n)));
+            document.getElementById('pendencias').style.display = 'block';
+          }
+        }
+      } catch (e) {
+        mostrarMsg(document.getElementById('msg'), e.message);
+      }
+    })();
+  </script>
+</body>
+</html>

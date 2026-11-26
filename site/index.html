@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <div class="tela-login">
+    <div class="caixa-login">
+      <div id="marca"></div>
+      <h1 id="titulo">Entrar</h1>
+
+      <!-- Login -->
+      <form id="form-login" class="card" style="display:none;flex-direction:column;gap:14px">
+        <label>Usuário<input name="usuario" autocomplete="username" autocapitalize="none" required></label>
+        <label>Senha<input name="senha" type="password" autocomplete="current-password" required></label>
+        <div id="msg-login" class="msg"></div>
+        <button class="botao" type="submit">Entrar</button>
+      </form>
+
+      <!-- Primeiro acesso -->
+      <form id="form-setup" class="card" style="display:none;flex-direction:column;gap:14px">
+        <p class="dica" style="margin:0">Primeiro acesso: crie a empresa e o usuário administrador. A chave de instalação é a que foi cadastrada no Worker.</p>
+        <label>Chave de instalação<input name="chave" type="password" autocomplete="off" required></label>
+        <label>Nome da empresa<input name="empresa_nome" required maxlength="80"></label>
+        <label>Seu nome<input name="nome" required maxlength="80"></label>
+        <label>Usuário<input name="usuario" autocomplete="username" autocapitalize="none" required>
+          <span class="dica">3 a 30 caracteres, sem espaço (ex.: joao.silva)</span></label>
+        <label>Senha<input name="senha" type="password" autocomplete="new-password" minlength="8" required>
+          <span class="dica">Mínimo de 8 caracteres</span></label>
+        <div id="msg-setup" class="msg"></div>
+        <button class="botao" type="submit">Criar e entrar</button>
+      </form>
+
+      <div id="msg-geral" class="msg"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    const formLogin = document.getElementById('form-login');
+    const formSetup = document.getElementById('form-setup');
+
+    async function iniciar() {
+      if (API.token()) { location.href = 'painel.html'; return; }
+      try {
+        const s = await API.req('/api/status');
+        aplicarCor(s.empresa.cor_principal);
+        document.getElementById('marca').append(logoEl(s.empresa));
+        document.title = s.empresa.nome_fantasia;
+        if (s.configurado) {
+          document.getElementById('titulo').textContent = s.empresa.nome_fantasia;
+          formLogin.style.display = 'flex';
+        } else {
+          document.getElementById('titulo').textContent = 'Configuração inicial';
+          formSetup.style.display = 'flex';
+        }
+      } catch (e) {
+        mostrarMsg(document.getElementById('msg-geral'), e.message);
+      }
+    }
+
+    async function entrar(usuario, senha, msg) {
+      const r = await API.req('/api/login', { metodo: 'POST', corpo: { usuario, senha } });
+      API.salvarToken(r.token);
+      location.href = 'painel.html';
+    }
+
+    formLogin.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const msg = document.getElementById('msg-login');
+      const btn = formLogin.querySelector('button');
+      limparMsg(msg); btn.disabled = true;
+      const d = Object.fromEntries(new FormData(formLogin));
+      try { await entrar(d.usuario, d.senha); }
+      catch (e) { mostrarMsg(msg, e.message); btn.disabled = false; }
+    });
+
+    formSetup.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const msg = document.getElementById('msg-setup');
+      const btn = formSetup.querySelector('button');
+      limparMsg(msg); btn.disabled = true;
+      const d = Object.fromEntries(new FormData(formSetup));
+      try {
+        await API.req('/api/setup', { metodo: 'POST', corpo: d });
+        await entrar(d.usuario, d.senha);
+      } catch (e) { mostrarMsg(msg, e.message); btn.disabled = false; }
+    });
+
+    iniciar();
+  </script>
+</body>
+</html>

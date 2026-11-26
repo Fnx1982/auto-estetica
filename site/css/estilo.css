@@ -1,0 +1,81 @@
+:root {
+  --cor: #0EA5E9;
+  --cor-texto: #04121C;
+  --fundo: #F3F4F6;
+  --texto: #14161B;
+  --suave: #5B6270;
+  --borda: #E3E6EB;
+  --menu: #121419;
+  --erro: #B91C1C;
+  --ok: #15803D;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--texto); background: var(--fundo); }
+h1, h2, h3, .titulo { font-family: 'Space Grotesk', Inter, sans-serif; }
+a { color: #0369A1; }
+
+/* ---------- Layout com menu ---------- */
+.app { display: flex; min-height: 100vh; }
+.menu { width: 250px; flex: none; background: var(--menu); color: #C9CED8; padding: 22px 14px; display: flex; flex-direction: column; gap: 20px; }
+.marca { display: flex; align-items: center; gap: 12px; padding: 0 6px; }
+.marca-logo { width: 42px; height: 42px; border-radius: 10px; background: var(--cor); color: var(--cor-texto); display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: 'Space Grotesk', sans-serif; overflow: hidden; flex: none; }
+.marca-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.marca-nome { color: #fff; font-weight: 700; font-size: 15px; line-height: 1.2; }
+.marca-sub { color: #8A92A3; font-size: 12px; }
+.menu nav { display: flex; flex-direction: column; gap: 2px; }
+.menu nav a, .menu nav span { display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; border-radius: 10px; color: #C9CED8; text-decoration: none; font-size: 14px; font-weight: 500; }
+.menu nav a:hover { background: #1F232C; color: #fff; }
+.menu nav a.ativo { background: var(--cor); color: var(--cor-texto); font-weight: 600; }
+.menu nav span { color: #6B7280; cursor: default; }
+.menu nav small { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
+.menu-rodape { margin-top: auto; font-size: 12px; color: #8A92A3; padding: 0 6px; display: flex; flex-direction: column; gap: 8px; }
+.menu-rodape b { color: #fff; }
+.menu-rodape button { background: none; border: 1px solid #2D323C; color: #C9CED8; border-radius: 8px; padding: 8px; font: inherit; cursor: pointer; }
+.conteudo { flex: 1; min-width: 0; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; }
+.topo-mobile { display: none; }
+
+/* ---------- Componentes ---------- */
+.cabecalho h1 { margin: 0; font-size: 26px; }
+.cabecalho p { margin: 4px 0 0; color: var(--suave); font-size: 14px; }
+.card { background: #fff; border: 1px solid var(--borda); border-radius: 14px; padding: 20px; }
+.card h2 { margin: 0 0 14px; font-size: 18px; }
+.grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.grade .inteiro { grid-column: 1 / -1; }
+label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: #3A404C; }
+input, select, textarea { font: inherit; font-size: 14px; font-weight: 400; padding: 10px 12px; border: 1px solid #D4D8DF; border-radius: 9px; background: #fff; color: var(--texto); width: 100%; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--cor); outline-offset: 1px; }
+.botao { font: 600 14px Inter, system-ui, sans-serif; background: var(--cor); color: var(--cor-texto); border: 0; border-radius: 10px; padding: 12px 18px; cursor: pointer; min-height: 44px; }
+.botao:disabled { opacity: .6; cursor: wait; }
+.botao.sec { background: #fff; color: var(--texto); border: 1px solid #D4D8DF; }
+.botao.peq { padding: 8px 12px; min-height: 36px; font-size: 13px; }
+.acoes { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.msg { font-size: 14px; padding: 10px 12px; border-radius: 9px; display: none; }
+.msg.erro { display: block; background: #FEF2F2; color: var(--erro); border: 1px solid #FECACA; }
+.msg.ok { display: block; background: #F0FDF4; color: var(--ok); border: 1px solid #BBF7D0; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; color: var(--suave); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 8px 6px; }
+td { padding: 12px 6px; border-top: 1px solid #EEF0F3; vertical-align: middle; }
+.tabela { overflow-x: auto; }
+.tag { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.tag.admin { background: #E0F2FE; color: #075985; }
+.tag.colab { background: #F3F4F6; color: #374151; }
+.tag.inativo { background: #FEE2E2; color: #991B1B; }
+.dica { font-size: 12px; color: var(--suave); font-weight: 400; }
+
+/* ---------- Login ---------- */
+.tela-login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.caixa-login { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; }
+.caixa-login .marca-logo { width: 64px; height: 64px; font-size: 22px; margin: 0 auto; }
+.caixa-login h1 { text-align: center; margin: 0; font-size: 22px; }
+
+/* ---------- Celular ---------- */
+@media (max-width: 860px) {
+  .app { flex-direction: column; }
+  .topo-mobile { display: flex; align-items: center; justify-content: space-between; background: var(--menu); color: #fff; padding: 12px 16px; }
+  .topo-mobile button { background: none; border: 1px solid #2D323C; color: #fff; border-radius: 8px; padding: 8px 12px; font: inherit; }
+  .menu { width: 100%; display: none; }
+  .menu.aberto { display: flex; }
+  .conteudo { padding: 20px 16px; }
+  .grade { grid-template-columns: minmax(0, 1fr); }
+}
